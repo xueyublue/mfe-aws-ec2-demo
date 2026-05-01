@@ -7,6 +7,7 @@ This guide explains how to provision and prepare an AWS EC2 instance to host thi
 - AWS account with permission to create EC2, key pairs, and security groups
 - A GitHub repository for this project
 - SSH key pair (`.pem`) downloaded during EC2 key pair creation
+- Backend API URL ready (example: `http://<EC2_PUBLIC_IP>:8080`) for frontend `.env` configuration
 
 ## 2) Create EC2 Instance (AWS Console)
 
@@ -73,6 +74,10 @@ npm -v
 ```bash
 git clone <YOUR_REPO_URL>
 cd mfe-aws-ec2-demo
+cat > .env <<'EOF'
+VITE_API_BASE_URL=http://<BACKEND_HOST_OR_IP>:8080
+VITE_TODOS_PATH=/api/todos
+EOF
 npm ci
 npm run build
 ```
@@ -82,6 +87,12 @@ Copy build output to Nginx web root:
 ```bash
 sudo rm -rf /var/www/html/*
 sudo cp -r dist/* /var/www/html/
+```
+
+Quick validation:
+
+```bash
+ls -la dist
 ```
 
 ## 6) Configure Nginx for SPA Routing
@@ -115,10 +126,23 @@ sudo systemctl enable nginx
 
 Open `http://<EC2_PUBLIC_IP>` in browser.
 
+Optional CLI check:
+
+```bash
+curl -I http://localhost
+```
+
 ## 7) Post-Setup Checklist
 
 - App loads from EC2 public IP
 - Browser refresh on nested routes works (`try_files` verified)
 - Security group only allows SSH from trusted IP ranges
 - Optional: attach Elastic IP for stable address
+- API calls from browser are successful (no CORS/network errors in browser DevTools)
+
+## 8) Common Issues
+
+- App loads but data cannot be fetched: verify `.env` values used during `npm run build`.
+- Browser shows stale frontend after re-deploy: clear browser cache and hard refresh.
+- Nginx serves default page: ensure files exist under `/var/www/html` and restart Nginx.
 

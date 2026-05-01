@@ -7,7 +7,12 @@ This project is a Todo CRUD frontend built with React, Vite, and Material UI. Ea
 -   `assignee`
 -   `labels` (multi-select)
 
-## Setup
+## Prerequisites
+
+-   Node.js 20+ (LTS recommended)
+-   npm 10+
+
+## Local Setup
 
 ```bash
 npm install
@@ -23,6 +28,11 @@ VITE_API_BASE_URL=http://localhost:8080
 VITE_TODOS_PATH=/api/todos
 ```
 
+Important:
+
+-   Vite only reads env values when the dev server starts. If `.env` changes, restart with `npm run dev`.
+-   In the app dialog, `(not set)` means the build/dev process did not receive one or both `VITE_*` variables.
+
 The frontend calls these endpoints:
 
 -   `GET {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
@@ -34,3 +44,12 @@ The frontend calls these endpoints:
 
 -   EC2 setup (Windows + macOS): `docs/ec2-setup-manual.md`
 -   CI/CD setup (Windows + macOS): `docs/cicd-setup-manual.md`
+
+For GitHub Actions deployment, keep this rule in mind:
+
+-   `VITE_API_BASE_URL` and `VITE_TODOS_PATH` must be configured as **Repository variables** (not Repository secrets), because the workflow uses `${{ vars.VITE_API_BASE_URL }}` and `${{ vars.VITE_TODOS_PATH }}`.
+
+## Quick Troubleshooting
+
+-   App shows `VITE_API_BASE_URL` / `VITE_TODOS_PATH` as `(not set)` in local dev: check `.env`, then restart `npm run dev`.
+-   App shows `(not set)` after GitHub deployment: check `Settings` -> `Secrets and variables` -> `Actions` -> `Variables` -> **Repository variables** for both `VITE_*`, then rerun workflow.
