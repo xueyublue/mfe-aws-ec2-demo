@@ -20,7 +20,7 @@ Create a `.env` file at the project root if your API is not served from the same
 
 ```bash
 VITE_API_BASE_URL=http://localhost:8080
-VITE_TODOS_PATH=/todos
+VITE_TODOS_PATH=/api/todos
 ```
 
 The frontend calls these endpoints:
