@@ -40,7 +40,7 @@ cat ~/Downloads/your-key.pem
 
 Copy the full output (including `BEGIN` and `END` lines).
 
-## 4) Add Repository Secrets
+## 4) Add Repository Secrets and Variables
 
 In GitHub repo -> Settings -> Secrets and variables -> Actions, add:
 
@@ -48,6 +48,8 @@ In GitHub repo -> Settings -> Secrets and variables -> Actions, add:
 -   `EC2_USER`: `ubuntu`
 -   `EC2_SSH_KEY`: full private key content from `.pem`
 -   `EC2_PORT`: `22` (optional; set in workflow if non-default)
+-   Repository variable `VITE_API_BASE_URL`: backend API base URL (example: `http://<EC2_PUBLIC_IP>:8080`)
+-   Repository variable `VITE_TODOS_PATH`: todos API path (example: `/todos`)
 
 ## 5) Add Deployment Workflow
 
