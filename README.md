@@ -1,12 +1,11 @@
 # Todo CRUD Frontend (React + Vite + MUI)
 
-This project is a Todo CRUD frontend built with React, Vite, and Material UI.
-Each todo item contains:
+This project is a Todo CRUD frontend built with React, Vite, and Material UI. Each todo item contains:
 
-- `title`
-- `description`
-- `assignee`
-- `labels` (multi-select)
+-   `title`
+-   `description`
+-   `assignee`
+-   `labels` (multi-select)
 
 ## Setup
 
@@ -26,7 +25,7 @@ VITE_TODOS_PATH=/todos
 
 The frontend calls these endpoints:
 
-- `GET {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
-- `POST {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
-- `PUT {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`
-- `DELETE {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`
+-   `GET {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
+-   `POST {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
+-   `PUT {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`
+-   `DELETE {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`

@@ -26,6 +26,7 @@ import {
   Paper,
   Select,
   Stack,
+  TablePagination,
   TextField,
   Typography,
 } from '@mui/material'
@@ -54,10 +55,17 @@ function App() {
   const [error, setError] = useState('')
   const [newTodo, setNewTodo] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState(null)
   const [editingForm, setEditingForm] = useState(EMPTY_FORM)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
 
   const hasTodos = useMemo(() => todos.length > 0, [todos])
+  const pagedTodos = useMemo(() => {
+    const startIndex = page * rowsPerPage
+    return todos.slice(startIndex, startIndex + rowsPerPage)
+  }, [page, rowsPerPage, todos])
 
   function normalizeLabels(labels) {
     if (!Array.isArray(labels)) {
@@ -120,8 +128,23 @@ function App() {
     fetchTodos()
   }, [])
 
-  async function handleCreateTodo(event) {
-    event.preventDefault()
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(todos.length / rowsPerPage) - 1)
+    if (page > maxPage) {
+      setPage(maxPage)
+    }
+  }, [page, rowsPerPage, todos.length])
+
+  function openCreateDialog() {
+    setIsCreateDialogOpen(true)
+  }
+
+  function closeCreateDialog() {
+    setIsCreateDialogOpen(false)
+    setNewTodo(EMPTY_FORM)
+  }
+
+  async function handleCreateTodo() {
     const title = newTodo.title.trim()
     if (!title) {
       return
@@ -132,7 +155,7 @@ function App() {
       setError('')
       const created = await createTodo(buildTodoPayload(newTodo, false))
       setTodos((prevTodos) => [...prevTodos, created])
-      setNewTodo(EMPTY_FORM)
+      closeCreateDialog()
     } catch (createError) {
       setError(createError.message || 'Failed to create todo.')
     } finally {
@@ -223,109 +246,29 @@ function App() {
     }
   }
 
+  function handleChangePage(_event, nextPage) {
+    setPage(nextPage)
+  }
+
+  function handleChangeRowsPerPage(event) {
+    setRowsPerPage(Number(event.target.value))
+    setPage(0)
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
         <Stack spacing={3}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Todo CRUD
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Manage todo items using your backend API.
-            </Typography>
-          </Box>
-
-          <Box component="form" onSubmit={handleCreateTodo}>
-            <Stack spacing={2}>
-              <TextField
-                fullWidth
-                required
-                label="Title"
-                value={newTodo.title}
-                onChange={(event) =>
-                  setNewTodo((prevValue) => ({
-                    ...prevValue,
-                    title: event.target.value,
-                  }))
-                }
-                disabled={saving}
-              />
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                label="Description"
-                value={newTodo.description}
-                onChange={(event) =>
-                  setNewTodo((prevValue) => ({
-                    ...prevValue,
-                    description: event.target.value,
-                  }))
-                }
-                disabled={saving}
-              />
-              <TextField
-                fullWidth
-                label="Assignee"
-                value={newTodo.assignee}
-                onChange={(event) =>
-                  setNewTodo((prevValue) => ({
-                    ...prevValue,
-                    assignee: event.target.value,
-                  }))
-                }
-                disabled={saving}
-              />
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <FormControl fullWidth>
-                  <InputLabel id="labels-select-label">Labels</InputLabel>
-                  <Select
-                    labelId="labels-select-label"
-                    multiple
-                    value={newTodo.labels}
-                    onChange={(event) =>
-                      setNewTodo((prevValue) => ({
-                        ...prevValue,
-                        labels: normalizeSelectValue(event.target.value),
-                      }))
-                    }
-                    input={<OutlinedInput label="Labels" />}
-                    renderValue={(selected) => (
-                      <Box className="labels-container">
-                        {selected.map((value) => (
-                          <Chip key={value} label={value} size="small" />
-                        ))}
-                      </Box>
-                    )}
-                    disabled={saving}
-                  >
-                    {LABEL_OPTIONS.map((label) => (
-                      <MenuItem key={label} value={label}>
-                        {label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={clearNewTodoLabels}
-                  disabled={saving || newTodo.labels.length === 0}
-                >
-                  Clear
-                </Button>
-              </Stack>
-              <Button
-                type="submit"
-                variant="contained"
-                startIcon={<AddTaskIcon />}
-                disabled={saving || !newTodo.title.trim()}
-              >
-                Add
-              </Button>
-            </Stack>
-          </Box>
+          <Stack direction="row" justifyContent="flex-end" alignItems="flex-start">
+            <Button
+              variant="contained"
+              startIcon={<AddTaskIcon />}
+              onClick={openCreateDialog}
+              disabled={saving}
+            >
+              Add
+            </Button>
+          </Stack>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
 
@@ -341,7 +284,7 @@ function App() {
 
           {!loading && hasTodos ? (
             <List disablePadding>
-              {todos.map((todo) => {
+              {pagedTodos.map((todo) => {
                 return (
                   <ListItem
                     key={todo.id}
@@ -405,6 +348,117 @@ function App() {
               })}
             </List>
           ) : null}
+
+          {!loading && hasTodos ? (
+            <TablePagination
+              component="div"
+              count={todos.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          ) : null}
+
+          <Dialog open={isCreateDialogOpen} onClose={closeCreateDialog} fullWidth maxWidth="sm">
+            <DialogTitle>Add Todo</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Title"
+                  value={newTodo.title}
+                  onChange={(event) =>
+                    setNewTodo((prevValue) => ({
+                      ...prevValue,
+                      title: event.target.value,
+                    }))
+                  }
+                  disabled={saving}
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  label="Description"
+                  value={newTodo.description}
+                  onChange={(event) =>
+                    setNewTodo((prevValue) => ({
+                      ...prevValue,
+                      description: event.target.value,
+                    }))
+                  }
+                  disabled={saving}
+                />
+                <TextField
+                  fullWidth
+                  label="Assignee"
+                  value={newTodo.assignee}
+                  onChange={(event) =>
+                    setNewTodo((prevValue) => ({
+                      ...prevValue,
+                      assignee: event.target.value,
+                    }))
+                  }
+                  disabled={saving}
+                />
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <FormControl fullWidth>
+                    <InputLabel id="create-labels-select-label">Labels</InputLabel>
+                    <Select
+                      labelId="create-labels-select-label"
+                      multiple
+                      value={newTodo.labels}
+                      onChange={(event) =>
+                        setNewTodo((prevValue) => ({
+                          ...prevValue,
+                          labels: normalizeSelectValue(event.target.value),
+                        }))
+                      }
+                      input={<OutlinedInput label="Labels" />}
+                      renderValue={(selected) => (
+                        <Box className="labels-container">
+                          {selected.map((value) => (
+                            <Chip key={value} label={value} size="small" />
+                          ))}
+                        </Box>
+                      )}
+                      disabled={saving}
+                    >
+                      {LABEL_OPTIONS.map((label) => (
+                        <MenuItem key={label} value={label}>
+                          {label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={clearNewTodoLabels}
+                    disabled={saving || newTodo.labels.length === 0}
+                  >
+                    Clear
+                  </Button>
+                </Stack>
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={closeCreateDialog} disabled={saving}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateTodo}
+                variant="contained"
+                startIcon={<AddTaskIcon />}
+                disabled={saving || !newTodo.title.trim()}
+              >
+                Add
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           <Dialog open={Boolean(editingTodo)} onClose={cancelEdit} fullWidth maxWidth="sm">
             <DialogTitle>Edit Todo</DialogTitle>
