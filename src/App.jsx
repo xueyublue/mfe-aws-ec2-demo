@@ -58,6 +58,8 @@ function App() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState(null)
   const [editingForm, setEditingForm] = useState(EMPTY_FORM)
+  const [todoToDelete, setTodoToDelete] = useState(null)
+  const [todoToComplete, setTodoToComplete] = useState(null)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
 
@@ -178,6 +180,22 @@ function App() {
     setEditingForm(EMPTY_FORM)
   }
 
+  function requestDeleteTodo(todo) {
+    setTodoToDelete(todo)
+  }
+
+  function cancelDeleteTodo() {
+    setTodoToDelete(null)
+  }
+
+  function requestCompleteTodo(todo) {
+    setTodoToComplete(todo)
+  }
+
+  function cancelCompleteTodo() {
+    setTodoToComplete(null)
+  }
+
   async function handleSaveTodo() {
     if (!editingTodo) {
       return
@@ -228,6 +246,15 @@ function App() {
     }
   }
 
+  async function confirmCompleteTodo() {
+    if (!todoToComplete?.id) {
+      return
+    }
+
+    await handleToggleCompleted(todoToComplete)
+    setTodoToComplete(null)
+  }
+
   async function handleDeleteTodo(todoId) {
     try {
       setSaving(true)
@@ -243,6 +270,7 @@ function App() {
       setError(deleteError.message || 'Failed to delete todo.')
     } finally {
       setSaving(false)
+      setTodoToDelete(null)
     }
   }
 
@@ -266,7 +294,7 @@ function App() {
               onClick={openCreateDialog}
               disabled={saving}
             >
-              Add
+              Add New Todo Item
             </Button>
           </Stack>
 
@@ -302,7 +330,7 @@ function App() {
                         <IconButton
                           aria-label="delete"
                           color="error"
-                          onClick={() => handleDeleteTodo(todo.id)}
+                          onClick={() => requestDeleteTodo(todo)}
                           disabled={saving}
                         >
                           <DeleteIcon />
@@ -312,10 +340,16 @@ function App() {
                   >
                     <Stack className="todo-row" direction="row" alignItems="flex-start">
                       <Checkbox
+                        className="todo-checkbox"
                         checked={todo.completed}
-                        onChange={() => handleToggleCompleted(todo)}
+                        onChange={() => {
+                          if (todo.completed) {
+                            handleToggleCompleted(todo)
+                            return
+                          }
+                          requestCompleteTodo(todo)
+                        }}
                         disabled={saving}
-                        sx={{ mt: 0.5 }}
                       />
                       <ListItemText
                         primary={todo.title}
@@ -555,6 +589,60 @@ function App() {
                 disabled={saving || !editingForm.title.trim()}
               >
                 Save
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={Boolean(todoToDelete)}
+            onClose={cancelDeleteTodo}
+            fullWidth
+            maxWidth="xs"
+          >
+            <DialogTitle>Delete Todo</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2" color="text.secondary">
+                Are you sure you want to delete{' '}
+                <strong>{todoToDelete?.title || 'this todo'}</strong>?
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={cancelDeleteTodo} disabled={saving}>
+                Cancel
+              </Button>
+              <Button
+                color="error"
+                variant="contained"
+                onClick={() => handleDeleteTodo(todoToDelete?.id)}
+                disabled={saving || !todoToDelete?.id}
+              >
+                Delete
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={Boolean(todoToComplete)}
+            onClose={cancelCompleteTodo}
+            fullWidth
+            maxWidth="xs"
+          >
+            <DialogTitle>Mark as Completed</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2" color="text.secondary">
+                Mark <strong>{todoToComplete?.title || 'this todo'}</strong> as completed?
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={cancelCompleteTodo} disabled={saving}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={confirmCompleteTodo}
+                disabled={saving || !todoToComplete?.id}
+              >
+                Confirm
               </Button>
             </DialogActions>
           </Dialog>
