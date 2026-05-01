@@ -1,16 +1,31 @@
-# React + Vite
+# Todo CRUD Frontend (React + Vite + MUI)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a Todo CRUD frontend built with React, Vite, and Material UI. Each todo item contains:
 
-Currently, two official plugins are available:
+-   `title`
+-   `description`
+-   `assignee`
+-   `labels` (multi-select)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Setup
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Backend API configuration
 
-## Expanding the ESLint configuration
+Create a `.env` file at the project root if your API is not served from the same origin:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+VITE_API_BASE_URL=http://localhost:8080
+VITE_TODOS_PATH=/todos
+```
+
+The frontend calls these endpoints:
+
+-   `GET {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
+-   `POST {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
+-   `PUT {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`
+-   `DELETE {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`
