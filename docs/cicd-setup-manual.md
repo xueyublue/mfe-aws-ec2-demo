@@ -25,7 +25,7 @@ Pipeline flow:
 In PowerShell, print key content:
 
 ```powershell
-Get-Content C:pathtoyour-key.pem -Raw
+Get-Content C:\path\to\your-key.pem -Raw
 ```
 
 Copy the full output (including `BEGIN` and `END` lines).
@@ -42,14 +42,31 @@ Copy the full output (including `BEGIN` and `END` lines).
 
 ## 4) Add Repository Secrets and Variables
 
-In GitHub repo -> Settings -> Secrets and variables -> Actions, add:
+In GitHub repo, go to `Settings` -> `Secrets and variables` -> `Actions`.
 
--   `EC2_HOST`: EC2 public IP or DNS
--   `EC2_USER`: `ubuntu`
--   `EC2_SSH_KEY`: full private key content from `.pem`
--   `EC2_PORT`: `22` (optional; set in workflow if non-default)
--   Repository variable `VITE_API_BASE_URL`: backend API base URL (example: `http://<EC2_PUBLIC_IP>:8080`)
--   Repository variable `VITE_TODOS_PATH`: todos API path (example: `/todos`)
+### 4.1 Add Repository Secrets (Secrets tab)
+
+1.  Click the `Secrets` tab.
+2.  Under **Repository secrets**, click `New repository secret`.
+3.  Add each secret:
+    - `EC2_HOST`: EC2 public IP or DNS
+    - `EC2_USER`: `ubuntu`
+    - `EC2_SSH_KEY`: full private key content from `.pem`
+    - `EC2_PORT`: `22` (optional; set in workflow if non-default)
+
+### 4.2 Add Repository Variables (Variables tab)
+
+1.  Click the `Variables` tab.
+2.  Under **Repository variables** (not Environment variables), click `New repository variable`.
+3.  Add:
+    - `VITE_API_BASE_URL` = backend API base URL (example: `http://<EC2_PUBLIC_IP>:8080`)
+    - `VITE_TODOS_PATH` = todos API path (example: `/api/todos`)
+
+### 4.3 Important note (common mistake)
+
+-   `VITE_API_BASE_URL` and `VITE_TODOS_PATH` must be saved as **Repository variables**, because the workflow reads them with `${{ vars.* }}`.
+-   If you save them as **Repository secrets**, the frontend build can still succeed, but the UI may show `(not set)` for backend env values.
+-   The **Environment variables** area is different from **Repository variables**. Unless your workflow explicitly targets an environment, add `VITE_*` under **Repository variables**.
 
 ## 5) Add Deployment Workflow
 
@@ -80,6 +97,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_TODOS_PATH: ${{ vars.VITE_TODOS_PATH }}
         run: npm run build
 
       - name: Upload dist to EC2
@@ -129,9 +149,17 @@ Use stricter command scoping if your security policy requires it.
 
 ## 7) Test Pipeline
 
-1.  Commit and push the workflow file to `main`.
-2.  Open GitHub -> Actions and watch `Deploy Frontend to EC2`.
-3.  Verify deployment by opening `http://<EC2_PUBLIC_IP>`.
+1.  Commit and push to `main` (or rerun the latest workflow after variable updates).
+2.  Open `GitHub -> Actions -> Deploy Frontend to EC2`.
+3.  Confirm all jobs are green:
+    - `Install dependencies`
+    - `Build`
+    - `Upload dist to EC2`
+    - `Publish dist to Nginx root`
+4.  Verify deployment by opening `http://<EC2_PUBLIC_IP>`.
+5.  In the app UI, check Backend API info:
+    - `VITE_API_BASE_URL` should not be `(not set)`
+    - `VITE_TODOS_PATH` should not be `(not set)`
 
 ## 8) Troubleshooting
 
@@ -140,3 +168,5 @@ Use stricter command scoping if your security policy requires it.
 -   Empty site after deploy: verify `dist` exists and copy path is correct.
 -   404 on route refresh: ensure Nginx `try_files ... /index.html;` is configured.
 -   `EBADPLATFORM` for `@rolldown/binding-win32-x64-msvc`: remove it from direct `dependencies`/`devDependencies` and regenerate `package-lock.json` using `npm install` before running CI on Linux.
+-   App dialog shows `VITE_API_BASE_URL` or `VITE_TODOS_PATH` as `(not set)`: confirm both are under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables` -> **Repository variables**, then rerun the workflow.
+-   Variable updated but app still shows old value: rerun the latest workflow (or push a new commit) so frontend is rebuilt with the new variables.
