@@ -29,3 +29,8 @@ The frontend calls these endpoints:
 -   `POST {VITE_API_BASE_URL}{VITE_TODOS_PATH}`
 -   `PUT {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`
 -   `DELETE {VITE_API_BASE_URL}{VITE_TODOS_PATH}/{id}`
+
+## Deployment Manuals
+
+-   EC2 setup (Windows + macOS): `docs/ec2-setup-manual.md`
+-   CI/CD setup (Windows + macOS): `docs/cicd-setup-manual.md`
