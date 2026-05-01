@@ -53,6 +53,7 @@ function App() {
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [newTodo, setNewTodo] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -117,6 +118,7 @@ function App() {
     try {
       setLoading(true)
       setError('')
+      setSuccessMessage('')
       const data = await getTodos()
       setTodos(data)
     } catch (fetchError) {
@@ -155,9 +157,11 @@ function App() {
     try {
       setSaving(true)
       setError('')
+      setSuccessMessage('')
       const created = await createTodo(buildTodoPayload(newTodo, false))
       setTodos((prevTodos) => [...prevTodos, created])
       closeCreateDialog()
+      setSuccessMessage('Added successfully.')
     } catch (createError) {
       setError(createError.message || 'Failed to create todo.')
     } finally {
@@ -209,6 +213,7 @@ function App() {
     try {
       setSaving(true)
       setError('')
+      setSuccessMessage('')
       const updated = await updateTodo(
         editingTodo.id,
         buildTodoPayload(editingForm, editingTodo.completed),
@@ -219,6 +224,7 @@ function App() {
         ),
       )
       cancelEdit()
+      setSuccessMessage('Updated successfully.')
     } catch (updateError) {
       setError(updateError.message || 'Failed to update todo.')
     } finally {
@@ -230,6 +236,7 @@ function App() {
     try {
       setSaving(true)
       setError('')
+      setSuccessMessage('')
       const updated = await updateTodo(
         todo.id,
         buildTodoPayload(todo, !todo.completed),
@@ -238,6 +245,9 @@ function App() {
         prevTodos.map((currentTodo) =>
           currentTodo.id === todo.id ? updated : currentTodo,
         ),
+      )
+      setSuccessMessage(
+        updated.completed ? 'Marked as completed successfully.' : 'Marked as active successfully.',
       )
     } catch (updateError) {
       setError(updateError.message || 'Failed to update todo.')
@@ -259,6 +269,7 @@ function App() {
     try {
       setSaving(true)
       setError('')
+      setSuccessMessage('')
       await deleteTodo(todoId)
       setTodos((prevTodos) =>
         prevTodos.filter((currentTodo) => currentTodo.id !== todoId),
@@ -266,6 +277,7 @@ function App() {
       if (editingTodo?.id === todoId) {
         cancelEdit()
       }
+      setSuccessMessage('Deleted successfully.')
     } catch (deleteError) {
       setError(deleteError.message || 'Failed to delete todo.')
     } finally {
@@ -299,6 +311,7 @@ function App() {
           </Stack>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
+          {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
 
           {loading ? (
             <Box className="centered-loader">
