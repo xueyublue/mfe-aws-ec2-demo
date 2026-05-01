@@ -49,6 +49,9 @@ const EMPTY_FORM = {
   labels: [],
 }
 
+const API_BASE_URL_VALUE = import.meta.env.VITE_API_BASE_URL?.trim() || '(not set)'
+const TODOS_PATH_VALUE = import.meta.env.VITE_TODOS_PATH?.trim() || '(not set)'
+
 function App() {
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -57,6 +60,7 @@ function App() {
   const [newTodo, setNewTodo] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isApiInfoDialogOpen, setIsApiInfoDialogOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState(null)
   const [editingForm, setEditingForm] = useState(EMPTY_FORM)
   const [todoToDelete, setTodoToDelete] = useState(null)
@@ -146,6 +150,14 @@ function App() {
   function closeCreateDialog() {
     setIsCreateDialogOpen(false)
     setNewTodo(EMPTY_FORM)
+  }
+
+  function openApiInfoDialog() {
+    setIsApiInfoDialogOpen(true)
+  }
+
+  function closeApiInfoDialog() {
+    setIsApiInfoDialogOpen(false)
   }
 
   async function handleCreateTodo() {
@@ -299,7 +311,12 @@ function App() {
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
         <Stack spacing={3}>
-          <Stack direction="row" justifyContent="flex-end" alignItems="flex-start">
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="flex-start"
+            sx={{ width: '100%' }}
+          >
             <Button
               variant="contained"
               startIcon={<AddTaskIcon />}
@@ -307,6 +324,9 @@ function App() {
               disabled={saving}
             >
               Add New Todo Item
+            </Button>
+            <Button variant="outlined" onClick={openApiInfoDialog}>
+              Backend API Info
             </Button>
           </Stack>
 
@@ -407,6 +427,34 @@ function App() {
               rowsPerPageOptions={[5, 10, 25]}
             />
           ) : null}
+
+          <Dialog
+            open={isApiInfoDialogOpen}
+            onClose={closeApiInfoDialog}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle>Backend API Info</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Box>
+                  <Typography variant="subtitle2">VITE_API_BASE_URL</Typography>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                    {API_BASE_URL_VALUE}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2">VITE_TODOS_PATH</Typography>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                    {TODOS_PATH_VALUE}
+                  </Typography>
+                </Box>
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={closeApiInfoDialog}>Close</Button>
+            </DialogActions>
+          </Dialog>
 
           <Dialog open={isCreateDialogOpen} onClose={closeCreateDialog} fullWidth maxWidth="sm">
             <DialogTitle>Add Todo</DialogTitle>
