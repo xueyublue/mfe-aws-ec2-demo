@@ -2,28 +2,22 @@
 
 This guide explains how to provision and prepare an AWS EC2 instance to host this frontend app.
 
-## 1) Prerequisites
-
-- AWS account with permission to create EC2, key pairs, and security groups
-- A GitHub repository for this project
-- SSH key pair (`.pem`) downloaded during EC2 key pair creation
-- Backend API URL ready (example: `http://<EC2_PUBLIC_IP>:8080`) for frontend `.env` configuration
-
-## 2) Create EC2 Instance (AWS Console)
+## 1) Create EC2 Instance (AWS Console)
 
 1. Open AWS Console -> EC2 -> Instances -> Launch instances.
 2. Recommended values:
-   - Name: `todo-frontend-ec2`
-   - AMI: `Ubuntu Server 22.04 LTS`
-   - Instance type: `t2.micro` (free tier) or equivalent
-   - Key pair: create/select a key pair and download the `.pem` file
-3. Network settings:
-   - Allow SSH (`22`) from your IP
-   - Allow HTTP (`80`) from anywhere
-   - Allow HTTPS (`443`) from anywhere
-4. Launch instance and note its Public IPv4 address.
+   - **Name:** `mfe-todo-demo`
+   - **AMI:** Ubuntu Server 22.04 LTS
+   - **Instance type:** `t2.micro` (free tier) or equivalent
+   - **Key pair name:** `ms-mfe-demo-key` (download yields `ms-mfe-demo-key.pem`)
+   - **Key pair type:** RSA (format `.pem`)
+3. Attach security group **`mfe-demo-sg`**. Create it only if it does not already exist; if `mfe-demo-sg` is already in your account, select it and skip creating a new one. Typical rules:
+   - SSH **22** from your public IP only
+   - HTTP **80** from anywhere (or restrict as needed)
+   - HTTPS **443** from anywhere (optional, for TLS later)
+4. Launch the instance and note its **Public IPv4** address.
 
-## 3) Connect to EC2
+## 2) Connect to EC2
 
 ### Windows Version
 
@@ -34,25 +28,26 @@ Use PowerShell with built-in OpenSSH:
 cd C:\path\to\key
 
 # Optional: tighten key permissions
-icacls .\your-key.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
+icacls .\ms-mfe-demo-key.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
 
 # Connect
-ssh -i .\your-key.pem ubuntu@<EC2_PUBLIC_IP>
+ssh -i .\ms-mfe-demo-key.pem ubuntu@<EC2_PUBLIC_IP>
 ```
 
-If you use PuTTY, convert `.pem` to `.ppk` with PuTTYgen and connect as user `ubuntu`.
+If you use PuTTY, convert `ms-mfe-demo-key.pem` to `.ppk` with PuTTYgen and connect as user `ubuntu`.
 
 ### macOS Version
 
 Use Terminal:
 
 ```bash
-cd ~/Downloads
-chmod 400 your-key.pem
-ssh -i ./your-key.pem ubuntu@<EC2_PUBLIC_IP>
+mkdir -p ~/.ssh
+cp ~/Downloads/ms-mfe-demo-key.pem ~/.ssh/
+chmod 400 ~/.ssh/ms-mfe-demo-key.pem
+ssh -i ~/.ssh/ms-mfe-demo-key.pem ubuntu@<EC2_PUBLIC_IP>
 ```
 
-## 4) Provision Server (Run on EC2)
+## 3) Provision Server (Run on EC2)
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -69,7 +64,7 @@ node -v
 npm -v
 ```
 
-## 5) Build and Deploy Frontend on EC2
+## 4) Build and Deploy Frontend on EC2
 
 ```bash
 git clone <YOUR_REPO_URL>
@@ -95,7 +90,7 @@ Quick validation:
 ls -la dist
 ```
 
-## 6) Configure Nginx for SPA Routing
+## 5) Configure Nginx for SPA Routing
 
 Create/update Nginx site config:
 
@@ -131,18 +126,3 @@ Optional CLI check:
 ```bash
 curl -I http://localhost
 ```
-
-## 7) Post-Setup Checklist
-
-- App loads from EC2 public IP
-- Browser refresh on nested routes works (`try_files` verified)
-- Security group only allows SSH from trusted IP ranges
-- Optional: attach Elastic IP for stable address
-- API calls from browser are successful (no CORS/network errors in browser DevTools)
-
-## 8) Common Issues
-
-- App loads but data cannot be fetched: verify `.env` values used during `npm run build`.
-- Browser shows stale frontend after re-deploy: clear browser cache and hard refresh.
-- Nginx serves default page: ensure files exist under `/var/www/html` and restart Nginx.
-
