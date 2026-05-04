@@ -2,23 +2,7 @@
 
 This guide sets up GitHub Actions to deploy the frontend build to an EC2 server through SSH.
 
-## 1) CI/CD Overview
-
-Pipeline flow:
-
-1.  Trigger on push to `main`
-2.  Install dependencies and run build in GitHub Actions
-3.  Upload `dist` to EC2
-4.  Replace Nginx web root content with latest build
-
-## 2) Prerequisites
-
--   EC2 server prepared (see `docs/ec2-setup-manual.md`)
--   This repo hosted on GitHub
--   Access to repo Settings -> Secrets and variables -> Actions
--   `.pem` key that can SSH into EC2 as `ubuntu`
-
-## 3) Prepare SSH Key for GitHub Actions
+## 1) Prepare SSH Key for GitHub Actions
 
 ### Windows Version
 
@@ -40,7 +24,7 @@ cat ~/Downloads/your-key.pem
 
 Copy the full output (including `BEGIN` and `END` lines).
 
-## 4) Add Repository Secrets and Variables
+## 2) Add Repository Secrets and Variables
 
 In GitHub repo, go to `Settings` -> `Secrets and variables` -> `Actions`.
 
@@ -68,7 +52,7 @@ In GitHub repo, go to `Settings` -> `Secrets and variables` -> `Actions`.
 -   If you save them as **Repository secrets**, the frontend build can still succeed, but the UI may show `(not set)` for backend env values.
 -   The **Environment variables** area is different from **Repository variables**. Unless your workflow explicitly targets an environment, add `VITE_*` under **Repository variables**.
 
-## 5) Add Deployment Workflow
+## 3) Add Deployment Workflow
 
 Create `.github/workflows/deploy-ec2.yml`:
 
@@ -127,7 +111,7 @@ jobs:
             sudo systemctl restart nginx
 ```
 
-## 6) One-Time Server Permission Setup (Run on EC2)
+## 4) One-Time Server Permission Setup (Run on EC2)
 
 ```bash
 mkdir -p /home/ubuntu/app
@@ -146,27 +130,3 @@ ubuntu ALL=(ALL) NOPASSWD:/bin/mkdir,/bin/rm,/bin/cp,/bin/systemctl
 ```
 
 Use stricter command scoping if your security policy requires it.
-
-## 7) Test Pipeline
-
-1.  Commit and push to `main` (or rerun the latest workflow after variable updates).
-2.  Open `GitHub -> Actions -> Deploy Frontend to EC2`.
-3.  Confirm all jobs are green:
-    - `Install dependencies`
-    - `Build`
-    - `Upload dist to EC2`
-    - `Publish dist to Nginx root`
-4.  Verify deployment by opening `http://<EC2_PUBLIC_IP>`.
-5.  In the app UI, check Backend API info:
-    - `VITE_API_BASE_URL` should not be `(not set)`
-    - `VITE_TODOS_PATH` should not be `(not set)`
-
-## 8) Troubleshooting
-
--   `Permission denied (publickey)`: check `EC2_SSH_KEY`, user, and host.
--   `Host key verification failed`: ensure action handles host keys or preconfigure known_hosts.
--   Empty site after deploy: verify `dist` exists and copy path is correct.
--   404 on route refresh: ensure Nginx `try_files ... /index.html;` is configured.
--   `EBADPLATFORM` for `@rolldown/binding-win32-x64-msvc`: remove it from direct `dependencies`/`devDependencies` and regenerate `package-lock.json` using `npm install` before running CI on Linux.
--   App dialog shows `VITE_API_BASE_URL` or `VITE_TODOS_PATH` as `(not set)`: confirm both are under `Settings` -> `Secrets and variables` -> `Actions` -> `Variables` -> **Repository variables**, then rerun the workflow.
--   Variable updated but app still shows old value: rerun the latest workflow (or push a new commit) so frontend is rebuilt with the new variables.
